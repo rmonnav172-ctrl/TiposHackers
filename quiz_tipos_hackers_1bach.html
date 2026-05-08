@@ -1,0 +1,274 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  .quiz-wrap { padding: 1.5rem 0; max-width: 660px; margin: 0 auto; }
+  .progress-bar-bg { height: 6px; background: var(--color-background-secondary); border-radius: 999px; margin-bottom: 1.5rem; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: #534AB7; border-radius: 999px; transition: width 0.4s ease; }
+  .progress-label { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 6px; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: var(--border-radius-md); margin-bottom: 1rem; }
+  .badge-purple { background: #EEEDFE; color: #3C3489; }
+  .badge-teal { background: #E1F5EE; color: #0F6E56; }
+  .badge-coral { background: #FAECE7; color: #993C1D; }
+  .q-number { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 6px; }
+  .q-text { font-size: 17px; font-weight: 500; color: var(--color-text-primary); line-height: 1.5; margin-bottom: 1.25rem; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt-btn { text-align: left; padding: 12px 16px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-lg); background: var(--color-background-primary); color: var(--color-text-primary); font-size: 15px; cursor: pointer; transition: background 0.15s, border-color 0.15s; display: flex; align-items: center; gap: 10px; }
+  .opt-btn:hover:not(:disabled) { background: var(--color-background-secondary); border-color: var(--color-border-primary); }
+  .opt-btn:disabled { cursor: default; }
+  .opt-btn.correct { background: #EAF3DE; border-color: #639922; color: #27500A; }
+  .opt-btn.wrong { background: #FCEBEB; border-color: #A32D2D; color: #501313; }
+  .opt-btn.reveal { background: #EAF3DE; border-color: #639922; color: #27500A; opacity: 0.7; }
+  .letter { width: 28px; height: 28px; border-radius: 50%; border: 0.5px solid var(--color-border-secondary); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; flex-shrink: 0; }
+  .opt-btn.correct .letter, .opt-btn.reveal .letter { background: #639922; border-color: #639922; color: #fff; }
+  .opt-btn.wrong .letter { background: #A32D2D; border-color: #A32D2D; color: #fff; }
+  .feedback { margin-top: 1rem; padding: 12px 16px; border-radius: var(--border-radius-lg); font-size: 14px; line-height: 1.6; display: none; }
+  .feedback.show { display: block; }
+  .feedback.ok { background: #EAF3DE; color: #27500A; border: 0.5px solid #639922; }
+  .feedback.ko { background: #FCEBEB; color: #501313; border: 0.5px solid #A32D2D; }
+  .next-btn { margin-top: 1.25rem; padding: 10px 24px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: #534AB7; color: #fff; font-size: 15px; font-weight: 500; cursor: pointer; display: none; }
+  .next-btn:hover { background: #3C3489; }
+  .result-panel { display: none; text-align: center; padding: 2rem 1rem; }
+  .result-panel.show { display: block; }
+  .score-circle { width: 100px; height: 100px; border-radius: 50%; background: #EEEDFE; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 1.25rem; }
+  .score-big { font-size: 28px; font-weight: 500; color: #3C3489; }
+  .score-label { font-size: 12px; color: #534AB7; }
+  .result-msg { font-size: 17px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 0.5rem; }
+  .result-sub { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 1.5rem; }
+  .restart-btn { padding: 10px 24px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); font-size: 15px; cursor: pointer; }
+  .restart-btn:hover { background: var(--color-background-secondary); }
+  .header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem; }
+</style>
+
+<div class="quiz-wrap">
+  <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Quiz: Tipos de Hackers informáticos — 1º Bachillerato</h2>
+
+  <div id="quiz-body">
+    <div class="header-row">
+      <span class="badge badge-purple"><i class="ti ti-shield-lock" aria-hidden="true"></i> Tipos de Hackers</span>
+      <span id="prog-label" class="progress-label">Pregunta 1 de 10</span>
+    </div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="pbar" style="width:10%"></div></div>
+
+    <div class="q-number" id="q-num">1 / 10</div>
+    <div class="q-text" id="q-text"></div>
+    <div class="options" id="opts"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="next-btn">Siguiente →</button>
+  </div>
+
+  <div class="result-panel" id="result-panel">
+    <div class="score-circle">
+      <span class="score-big" id="res-score"></span>
+      <span class="score-label">aciertos</span>
+    </div>
+    <div class="result-msg" id="res-msg"></div>
+    <div class="result-sub" id="res-sub"></div>
+    <button class="restart-btn" id="restart-btn"><i class="ti ti-refresh" aria-hidden="true"></i> Volver a intentarlo</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    text: "Un hacker que actúa con permiso del propietario del sistema para detectar vulnerabilidades se conoce como:",
+    opts: ["Black Hat", "Grey Hat", "White Hat", "Script Kiddie"],
+    correct: 2,
+    badge: "white",
+    feedback: "✅ Correcto. El White Hat (sombrero blanco) trabaja de forma ética y legal. Se dedica a la ciberseguridad ofensiva con autorización, como los pentesters o los participantes en programas de bug bounty."
+  },
+  {
+    text: "¿Qué tipo de hacker actúa de forma ilegal, motivado principalmente por el beneficio económico o el daño a sistemas ajenos?",
+    opts: ["White Hat", "Black Hat", "Hacktivist", "Blue Hat"],
+    correct: 1,
+    badge: "black",
+    feedback: "✅ Correcto. El Black Hat (sombrero negro) es el cibercriminal clásico: accede a sistemas sin autorización con fines maliciosos como robo de datos, ransomware o sabotaje."
+  },
+  {
+    text: "Un Grey Hat hackea un sistema sin permiso, descubre una vulnerabilidad y avisa al propietario (a veces pidiendo dinero). ¿Qué lo diferencia del Black Hat?",
+    opts: [
+      "El Grey Hat siempre trabaja para empresas de seguridad",
+      "El Grey Hat no tiene intención maliciosa, aunque actúa sin autorización",
+      "El Grey Hat solo hackea redes Wi-Fi públicas",
+      "No hay diferencia real entre ambos"
+    ],
+    correct: 1,
+    badge: "grey",
+    feedback: "✅ Correcto. El Grey Hat ocupa un terreno ambiguo: actúa sin permiso (ilegal), pero su intención no es dañar. La principal diferencia con el Black Hat es la motivación y el uso que hace de la información."
+  },
+  {
+    text: "Los hacktivistas (Hacktivists) se caracterizan por:",
+    opts: [
+      "Hackear para obtener beneficio económico personal",
+      "Trabajar como consultores de seguridad en grandes empresas",
+      "Usar el hacking como forma de activismo político o social",
+      "Probar la seguridad de sistemas con permiso del cliente"
+    ],
+    correct: 2,
+    badge: "grey",
+    feedback: "✅ Correcto. Los hacktivistas combinan hacking con activismo. Grupos como Anonymous atacan a gobiernos o empresas para protestar o denunciar injusticias, generalmente haciendo visible información o tumbando servicios."
+  },
+  {
+    text: "Un 'Script Kiddie' es alguien que:",
+    opts: [
+      "Desarrolla sus propias herramientas de hacking avanzadas",
+      "Usa herramientas y exploits creados por otros sin entender cómo funcionan",
+      "Trabaja de forma profesional en equipos de Red Team",
+      "Es experto en criptografía y seguridad de redes"
+    ],
+    correct: 1,
+    badge: "grey",
+    feedback: "✅ Correcto. El Script Kiddie (o Skiddie) no tiene conocimientos técnicos propios: descarga herramientas ya creadas y las ejecuta sin comprender el mecanismo. Se les considera poco peligrosos técnicamente, aunque pueden causar daños reales."
+  },
+  {
+    text: "¿Qué es un 'State-Sponsored Hacker' (hacker patrocinado por un Estado)?",
+    opts: [
+      "Un hacker contratado por empresas privadas para espionaje industrial",
+      "Un hacker que actúa por cuenta de un gobierno para espionaje, sabotaje o guerra cibernética",
+      "Un hacker que trabaja solo y dona sus hallazgos a organismos públicos",
+      "Un experto en ciberseguridad que asesora a los cuerpos policiales"
+    ],
+    correct: 1,
+    badge: "black",
+    feedback: "✅ Correcto. Los hackers patrocinados por estados son operativos de inteligencia o grupos APT (Advanced Persistent Threat) financiados por gobiernos. Ejemplos conocidos incluyen ataques a infraestructuras críticas o campañas de desinformación."
+  },
+  {
+    text: "El término 'Red Team' en ciberseguridad hace referencia a:",
+    opts: [
+      "Equipos que defienden los sistemas de una organización frente a ataques",
+      "Hackers criminales que trabajan en grupo organizado",
+      "Equipos que simulan ser atacantes para encontrar fallos de seguridad",
+      "Auditores que revisan el código fuente de las aplicaciones"
+    ],
+    correct: 2,
+    badge: "white",
+    feedback: "✅ Correcto. El Red Team actúa como 'atacante' en simulaciones controladas. Su objetivo es encontrar vulnerabilidades reales antes que los hackers maliciosos. Se opone al Blue Team, que defiende el sistema."
+  },
+  {
+    text: "Un 'Whistleblower hacker' (como Edward Snowden) se diferencia de un hacktivist principalmente en que:",
+    opts: [
+      "No tiene conocimientos técnicos reales",
+      "Filtra información interna a la que tenía acceso legítimo, en lugar de infiltrarse desde fuera",
+      "Siempre actúa en beneficio propio económicamente",
+      "Solo ataca sistemas gubernamentales extranjeros"
+    ],
+    correct: 1,
+    badge: "grey",
+    feedback: "✅ Correcto. El whistleblower accede a información desde dentro (como empleado o contratista) y la revela públicamente por motivos éticos. No necesariamente hackea sistemas externos; actúa desde su posición de acceso legítimo."
+  },
+  {
+    text: "¿Cuál de estas afirmaciones sobre los Bug Bounty Hunters es correcta?",
+    opts: [
+      "Son hackers ilegales que venden vulnerabilidades al mejor postor",
+      "Son investigadores que encuentran fallos en sistemas y los notifican a cambio de recompensa económica",
+      "Trabajan exclusivamente para agencias de inteligencia gubernamentales",
+      "Son un tipo de Script Kiddie especializado en bugs de software"
+    ],
+    correct: 1,
+    badge: "white",
+    feedback: "✅ Correcto. Los Bug Bounty Hunters son un tipo de White Hat que colabora con empresas (como Google, Microsoft o Meta) a través de programas oficiales. Reportan vulnerabilidades de forma responsable y reciben una recompensa económica."
+  },
+  {
+    text: "Ordena correctamente del más ético al menos ético: White Hat / Grey Hat / Black Hat",
+    opts: [
+      "Black Hat → Grey Hat → White Hat",
+      "Grey Hat → White Hat → Black Hat",
+      "White Hat → Grey Hat → Black Hat",
+      "White Hat → Black Hat → Grey Hat"
+    ],
+    correct: 2,
+    badge: "white",
+    feedback: "✅ Correcto. El White Hat actúa siempre con permiso y dentro de la ley. El Grey Hat no tiene autorización pero carece de intención maliciosa. El Black Hat actúa ilegalmente con fines dañinos o de beneficio propio."
+  }
+];
+
+let current = 0, score = 0, answered = false;
+
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+let shuffledOrder = [];
+
+function renderQuestion() {
+  const q = questions[current];
+  document.getElementById('q-num').textContent = (current+1) + ' / ' + questions.length;
+  document.getElementById('prog-label').textContent = 'Pregunta ' + (current+1) + ' de ' + questions.length;
+  document.getElementById('pbar').style.width = (((current+1)/questions.length)*100) + '%';
+  document.getElementById('q-text').textContent = q.text;
+  const optsEl = document.getElementById('opts');
+  optsEl.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  shuffledOrder = q.opts.map((o,i)=>i);
+
+  shuffledOrder.forEach((origIdx, displayIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = '<span class="letter">' + letters[displayIdx] + '</span>' + q.opts[origIdx];
+    btn.dataset.orig = origIdx;
+    btn.addEventListener('click', () => selectAnswer(btn, origIdx));
+    optsEl.appendChild(btn);
+  });
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback';
+  fb.textContent = '';
+  document.getElementById('next-btn').style.display = 'none';
+  answered = false;
+}
+
+function selectAnswer(btn, origIdx) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const allBtns = document.querySelectorAll('.opt-btn');
+  allBtns.forEach(b => {
+    b.disabled = true;
+    const bOrig = parseInt(b.dataset.orig);
+    if (bOrig === q.correct) {
+      b.classList.add(origIdx === q.correct ? 'correct' : 'reveal');
+    } else if (bOrig === origIdx && origIdx !== q.correct) {
+      b.classList.add('wrong');
+    }
+  });
+  const fb = document.getElementById('feedback');
+  if (origIdx === q.correct) {
+    score++;
+    fb.className = 'feedback show ok';
+    fb.textContent = q.feedback;
+  } else {
+    fb.className = 'feedback show ko';
+    fb.textContent = '❌ Incorrecto. ' + q.feedback.replace('✅ Correcto. ','');
+  }
+  document.getElementById('next-btn').style.display = 'inline-block';
+}
+
+document.getElementById('next-btn').addEventListener('click', () => {
+  current++;
+  if (current >= questions.length) showResult();
+  else renderQuestion();
+});
+
+function showResult() {
+  document.getElementById('quiz-body').style.display = 'none';
+  const rp = document.getElementById('result-panel');
+  rp.classList.add('show');
+  document.getElementById('res-score').textContent = score + '/' + questions.length;
+  const pct = (score / questions.length) * 100;
+  let msg, sub;
+  if (pct === 100) { msg = '¡Perfecto! Dominas los tipos de hackers 🎉'; sub = 'Has respondido correctamente todas las preguntas. ¡Excelente trabajo!'; }
+  else if (pct >= 70) { msg = '¡Muy bien! Tienes buena base'; sub = 'Repasa los conceptos en los que fallaste y estarás listo/a.'; }
+  else if (pct >= 50) { msg = 'Vas por buen camino'; sub = 'Revisa especialmente los tipos menos conocidos: Grey Hat, Hacktivist y Bug Bounty.'; }
+  else { msg = 'Necesitas repasar el tema'; sub = 'Vuelve a estudiar los tipos de hackers y sus motivaciones principales antes de repetir.'; }
+  document.getElementById('res-msg').textContent = msg;
+  document.getElementById('res-sub').textContent = sub;
+}
+
+document.getElementById('restart-btn').addEventListener('click', () => {
+  current = 0; score = 0; answered = false;
+  document.getElementById('quiz-body').style.display = 'block';
+  document.getElementById('result-panel').classList.remove('show');
+  renderQuestion();
+});
+
+renderQuestion();
+</script>
